@@ -1,0 +1,138 @@
+SIR:=proc(N,phi,X,x,J,ITmax,Rfac,dPdx,sub,tol,mA)
+global Phi,alpha,RI,R,E,f,nsave,U,eps:
+local Js,a_c,S1_min,Phi_proc,Phi_one_proc,J_proc,i,j,k,K,m,n,alpha_proc,xold,x0,x1,mon,conv,x0_sav,xt,Phi_t,S1,S2,ifR,xv:
+
+#-----------------#
+# Root solver SIR #
+#-----------------#
+# This Maple code finds a solution to the system of nonlinear equations f = x - phi(x) = 0 from an initial guess solution vector X. A semi-implicit approach is used, being a generalization of Newton's method with improved global convergence characteristics. Newton's method is obtained by setting the parameter dPdx = 0. For details, see J. Scheffel and C. Hakansson, Appl. Numer. Math. 59(2009)2430.  
+
+#------------------#
+# Input parameters #
+#------------------#
+# N     - total number of equations
+# phi   - functions in fixed point equations x = phi(x)
+# X     - initial guess for
+# x     - solution vector
+# J     - Jacobian of f(x)=x-phi(x)
+# ITmax - maximum number of iterations
+# Rfac  - reduction of R at each iteration (rec = 0.5)
+# dPdx  - dPhi/dx = R at first iteration (rec = 0.95)
+# sub   - for subiteration set =1 (rec=0)
+# tol   - solution accuracy
+# mA    - number of iterations that A matrix is recomputed (Nonlinear equations: use ITmax value for default or try numbers like 5 to increase efficiency. Linear equations: since A is constant, use 0 when calling SIR more than once)
+
+Js :=20:         # Maximum number of sub-iterations (rec = 20)   
+K  :=1:          # Number of monotonicity check points (rec = 1)        
+a_c:=2.0:        # Maximum allowed magnitude of alpha element (rec = 2.0)     
+S1_min:=-5.0e-2: # Parameter for monotonicity check
+
+#--Vectors and Matrices.--#
+unassign('x','R'):
+xv := Vector(N, symbol = x):
+E  := IdentityMatrix(N,storage=sparse):
+RI := DiagonalMatrix(Vector(N,symbol=R)-Vector(N,1));
+
+#--Procedures.--#
+# Semi-implicit function Phi(x;a) 
+Phi_proc:=proc()            
+global Phi:
+Phi:=map(eval,alpha.(xv-phi)+phi):
+end:
+
+# Evaluates single row of Phi(x;a)  
+Phi_one_proc:=proc(k,x)     
+local m:
+global Phi1:
+Phi1:=add(alpha[k,m]*(x[m]-phi[m]),m=1..N)+phi[k]:
+end:
+
+# Semi-implicit parameters alpha[i,j] 
+alpha_proc:=proc()          
+global alpha:
+alpha:=E+Transpose(LinearSolve(Transpose(J),Transpose(RI))):
+end:
+
+#--Initialization.--#
+x   :=X:   # Initial guess for root x = x0                   
+xold:=     Array(1..N)  :
+R   :=dPdx*Array(1..N,1):
+eps :=1.0: # Dummy value for accuracy test            
+
+#--Iteration loop.--#
+for n from 1 to ITmax while eps > tol do
+
+#--First: compute new alpha matrix and iterate Phi.--#
+if n<=mA then alpha_proc() fi:
+Phi_proc():
+
+#--Second: assign new x positions.--#
+for i from 1 to N do
+  x0[i]  := x[i]:
+  x[i]   := Phi[i]:
+  x1[i]  := x[i]:
+  mon[i] := x0[i]-x1[i]:
+od:
+
+# Third: for sub=1; subiterate and make sure that valid step is taken.
+# Valid step: 1) convergence should be monotonous  and
+#             2) near-singular values of alpha should be avoided.
+# Invalid step remedy; respective R[i] are adjusted towards 1 in # up to Js sub-iterations. 
+
+if sub=1 then
+if max(seq(abs(x1[i]-x0[i])-abs(x0[i]-xold[i]),i=1..N))>0 then print('inside'):
+for m from 1 to Js do
+
+  for i from 1 to N do
+    x0_sav:=x0[i]:
+    for k from 1 to K do xt[k]:= x0[i] + (k/K)*(x[i]-x0[i]): od:
+    for k from 1 to K do     
+      x0[i]:=xt[k]:
+      Phi_one_proc(i,x0):
+      Phi_t[k]:=Phi1: 
+    od:  
+    x0[i]:=x0_sav:
+    S1:=seq(mon[i]*(xt[k]-Phi_t[k]),k=1..K):
+    S2:=seq(abs(alpha[i,j]),j=1..N):
+    if max(S2) < a_c and min(S1) >= S1_min then ifR[i]:=0 else ifR[i]:=1: fi:
+  od:
+
+  if max(seq(ifR[j],j=1..N)) = 0 then break: fi:
+
+  for i from 1 to N do
+    if ifR[i] = 1 then R[i]:=(3*R[i]+1.0)/4.0: fi:
+    x[i]:=x0[i]:
+  od:
+
+  if n<=mA then alpha_proc() fi:
+  Phi_proc():
+  for i from 1 to N do
+  x[i] :=Phi[i]:
+  x1[i]:=x[i]:
+  od:
+od:
+fi:
+fi:
+
+eps:=add(abs(x1[ie]-x0[ie]),ie=1..N)/N:
+if n=ITmax and eps > tol then 
+print(SIR_does_not_converge_wrt_tol_for_this_ITmax):
+else
+print('eps',eps,'at_iteration',n):
+fi:
+
+#--Fourth: second order convergence means letting R values tend to zero. Save also iteration data for each x component.--#
+for i from 1 to N do
+  R[i]   :=Rfac*R[i]:
+  xold[i]:=x0[i]:
+  U[i,n]:=x[i]: if n=1 then U[i,0]:=xold[i] fi:
+od:
+
+od:         # End of iteration loop
+
+#--Fifth: save the number of iterations and the new X vector (=x). Set x free.--#
+nsave:=n:
+for i from 1 to N do X[i]:=x[i]: od:
+unassign('x'):
+
+end:

@@ -1,0 +1,29 @@
+#-----------------------------------#
+#         Create Jacobian J         #
+# by differentiating f(x)=x-phi(x). #
+#-----------------------------------#
+
+J_proc:=proc(Jflag,m1,m2)
+global J,f:
+local  i,j,k:
+# The Jacobian can be obtained in three ways (provide Jflag on input):
+# Jflag=1 - rather slow: based on definition and Maple differentiation: 
+if Jflag=1 then
+  J:=Matrix(1..N,1..N):
+  for i from 1 to N do
+  f[i]:=x[i]-phi[i]:
+  for j from 1 to N do
+  J[i,j]:=diff(f[i],x[j]):
+  od: od:
+fi:
+# Jflag=2 - faster (recommended): uses sparse matrix algorithms when appropriate:
+if Jflag=2 then
+  J:=VectorCalculus[Jacobian]([seq(x[i]-phi[i],i=1..N)],[seq(x[j],j=1..N)]):
+fi:
+# Jflag=3 - really fast for large, sparse matrices (N>1000 or so). Algorithm below is for band matrix where parameters m1 and m2 stand for the number of subdiagonals and superdiagonals respectively: 
+if Jflag=3 then
+  J:=Matrix(N,(i,j)->diff(x[i]-phi[i],x[j]),shape=band[m1,m2]):
+fi:
+end:
+
+
