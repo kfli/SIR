@@ -2,7 +2,7 @@
 %%     Find roots      %%
 %% with SIR and fsolve %%
 %%%%%%%%%%%%%%%%%%%%%%%%%
-clear all
+
 %% 1D function - f(x)=x-2cos(x).
 % Find the root x*, 
 % SIR phi(x)=x-f(x)=2cos(x).
