@@ -15,7 +15,7 @@ disp('fsolve solution')
 disp(y1D)
 
 phi1D = @(x)(2*cos(x));
-tic;U1D = SIR(phi1D,x0,0);toc
+tic;U1D = SIR(phi1D,x0,0,0.95);toc
 disp('SIR solution')
 disp(U1D)
 
@@ -40,23 +40,32 @@ tic;U2D = SIR(phi2D,x0,1);toc
 disp('SIR solution')
 disp(U2D)
 
+%% Convergence diagrams
+convdiag = zeros(41,41);
+k = 0;
+for i = -5:0.25:5
+    k = k+1;
+    l = 0;
+    for j = -5:0.25:5
+        l = l+1;
+        x0 = [i,j];
+        [U2D,iter] = SIR(phi2D,x0,1,0.9999);
+        convdiag(k,l)=iter;
+    end
+end
+
 %%     Surfplot    %%
-% Z = (f1^2+f2^2)/2 %
-hold on
-[X,Y] = meshgrid(-5:0.65:5);
+[X,Y] = meshgrid(-5:0.25:5);
 f1 = X-cos(Y); f2 = Y-3*cos(X);
-Z = (f1^2+f2^2)/2;
-s = surf(X,Y,Z,'FaceAlpha',0.45);
-view([-37 60])
-% Point-plot of initial guess x0
-plot3(x0(1),x0(2),0,'Marker','o',...
-    'MarkerEdgeColor','r',...
-    'MarkerFaceColor','r')
-% Point-plot of solution (x1*,x2*)
-plot3(U2D(1),U2D(2),((U2D(1)-cos(U2D(2)))^2+...
-    (U2D(2)-3*cos(U2D(1)))^2)/2,...
-    'Marker','o',...
-    'MarkerEdgeColor','b',...
-    'MarkerFaceColor','b')
-hold off
-print -depsc surfFig
+Z = (f1.*f1+f2.*f2)/2;
+
+figure(1)
+surf(X,Y,Z,convdiag)
+view([-40 60])
+title('Convergence diagram: SIR-s [f_1 = x_1-cos(x_2), f_2 = x_2-3*cos(x_1)]')
+xlabel('$$\textbf{x}_1$$','Interpreter', 'Latex')
+ylabel('$$\textbf{x}_2$$','Interpreter', 'Latex')
+zlabel('$$\textbf{f}{\cdot}\textbf{f/2}$$','Interpreter', 'Latex')
+hcb=colorbar;
+title(hcb,'iterations')
+colormap(jet)
