@@ -1,4 +1,4 @@
-function U = SIR(phi,x0,sub)
+function [U,n] = SIR(phi,x0,sub,dPdx)
 
 %%%%%%%%%%%%%%%%
 %% Parameters %%
@@ -6,7 +6,6 @@ function U = SIR(phi,x0,sub)
 if sub==0
     % Default values
     Rfac=0.5;      % Reduction of R at each iteration
-    dPdx=0.95;     % Initial values of R
 else
     % Values when subiterating
     Rfac=0.8;      % Reduction of R at each iteration
