@@ -10,30 +10,35 @@ disp('1D case')
 fun1D = @(x)(x-2*cos(x));
 x0 = 2;
 
-tic;y1D = fsolve(fun1D,x0);toc
-disp(['fsolve solution: ', num2str(y1D)])
+options = optimset('Display','off','TolFun', 1e-8, 'MaxIter', 150);
+tic;y1D = fsolve(fun1D,x0,options);toc
+disp(['fsolve solution: ', num2str(y1D),'; Residual: ',...
+    num2str(sum(fun1D(y1D).^2))])
 
 phi1D = @(x)(2*cos(x));
 tic;U1D = SIR(phi1D,x0,0);toc
-disp(['SIR solution: ', num2str(U1D)])
+disp(['SIR solution: ', num2str(U1D),'; Residual: ',...
+    num2str(sum(fun1D(U1D).^2))])
+fprintf(1, '\n');
 
 %% 2D function - f1(x1,x2)=x1-cos(x2),
 %                f2(x1,x2)=x2-3cos(x1).
 % Find roots (x1*,x2*), 
 % SIR  phi1(x1,x2)=x1-f1(x1,x2)=cos(x2),
 %      phi2(x1,x2)=x2-f2(x1,x2)=3cos(x1).
-
 disp('2D case')
 fun2D = @(x)[x(1)-cos(x(2)),...
     x(2)-3*cos(x(1))];
 x0 = [-2,-2];
 
-tic;y2D = fsolve(fun2D,x0);toc
-disp(['fsolve solution: ', num2str(y2D)])
+tic;y2D = fsolve(fun2D,x0,options);toc
+disp(['fsolve solution: ','[',num2str(y2D(1)),', ', num2str(y2D(2)),']','; Residual: ',...
+    num2str(sum(fun2D(y2D).^2))])
 
 phi2D = @(x)[cos(x(2)),3*cos(x(1))];
 tic;U2D = SIR(phi2D,x0,1);toc
-disp(['SIR solution: ', num2str(U2D)])
+disp(['SIR solution: ','[',num2str(U2D(1)),', ', num2str(U2D(2)),']','; Residual: ',...
+    num2str(sum(fun2D(U2D).^2))])
 
 
 %% Convergence diagrams
