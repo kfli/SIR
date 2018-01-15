@@ -15,7 +15,7 @@ end
 
 N=numel(x0);     % Number of equations
 tol=1e-8;        % Solution accuracy
-imax=100;         % Maximum number of iterations
+imax=150;         % Maximum number of iterations
 Js=1000;           % Maximum number of subiterations
 a_c=2;           % Critical magnitude for alpha
 S1_min=-5e-2;    % Parameter for monotonicity check
