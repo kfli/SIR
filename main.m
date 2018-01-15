@@ -10,7 +10,7 @@ disp('1D case')
 fun1D = @(x)(x-2*cos(x));
 x0 = 2;
 
-options = optimset('Display','off','TolFun', 1e-8, 'MaxIter', 150);
+options = optimset('Display','off','TolFun',1e-8,'MaxIter',150);
 tic;y1D = fsolve(fun1D,x0,options);toc
 disp(['fsolve solution: ', num2str(y1D),'; Residual: ',...
     num2str(sum(fun1D(y1D).^2))])
@@ -39,7 +39,6 @@ phi2D = @(x)[cos(x(2)),3*cos(x(1))];
 tic;U2D = SIR(phi2D,x0,1);toc
 disp(['SIR solution: ','[',num2str(U2D(1)),', ', num2str(U2D(2)),']','; Residual: ',...
     num2str(sum(fun2D(U2D).^2))])
-
 
 %% Convergence diagrams
 convdiag = zeros(51,51);
